@@ -24,7 +24,7 @@ public:
 	void setFrameRateDuration(BMDTimeValue _frameRateDuration)					{frameRateDuration = _frameRateDuration;}
 	void setFrameRateScale(BMDTimeValue _frameRateScale)						{frameRateScale = _frameRateScale;}
 
-	void long getFrameCount() 													{return frameCount;		}
+	long getFrameCount()	    {return frameCount;		}
 
 	
 	static double sageTime(); //replace sage::getTime
@@ -39,7 +39,7 @@ private:
 
 	BMDTimeValue 				frameRateDuration, frameRateScale;
 
-	unsigned long 				frameCount 				= 0
+	unsigned long 				frameCount;
 
 	//for drawing the video frame
 	GLWidget*					glWidget; 

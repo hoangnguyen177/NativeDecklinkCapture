@@ -21,9 +21,13 @@ public:
 
  void setTextureWidth(int _tWidth)			{ textureWidth = _tWidth;	}
  void setTextureHeight(int _tHeight)		{ textureHeight = _tHeight;	}
- void getTextureWidth()						{ return textureWidth;		}
- void getTextureHeight()					{ return textureHeight;		}
+ int getTextureWidth()						{ return textureWidth;		}
+ int getTextureHeight()					{ return textureHeight;		}
 
+ GLuint getDisplayList();
+ void setDisplayList(GLuint _displayList);
+ GLuint getTexture();
+ void setTexture(GLuint _texture);
 
 protected:
  void initializeGL();

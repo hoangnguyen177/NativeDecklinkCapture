@@ -18,6 +18,8 @@ DeckLinkCaptureDelegate::DeckLinkCaptureDelegate(GLWidget* _glWidget) : m_refCou
 {
 	pthread_mutex_init(&m_mutex, NULL);
 	glWidget = _glWidget;
+	frameCount = 0;
+		
 }
 
 DeckLinkCaptureDelegate::~DeckLinkCaptureDelegate()

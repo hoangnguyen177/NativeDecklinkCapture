@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <iostream>
+#include <stdlib.h>
 using namespace std;
 
 #include "glwidget.h"
@@ -142,7 +143,7 @@ int Window::processArguments(int argc, char* argv[]){
                          case 2: pixelFormat = bmdFormat10BitRGB; break;
                          default:
                               fprintf(stderr, "Invalid argument: Pixel format %d is not valid", atoi(optarg));
-                              goto bail;
+                              exit(1);
                     }
                     break;
                case 't':
@@ -155,12 +156,12 @@ int Window::processArguments(int argc, char* argv[]){
                     else
                     {
                          fprintf(stderr, "Invalid argument: Timecode format \"%s\" is invalid\n", optarg);
-                         goto bail;
+                         exit(1);
                     }
                     break;
                case '?':
                case 'h':
-                    usage(0);
+                    usage();
           }
      }
 

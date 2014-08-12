@@ -35,7 +35,7 @@ private:
 	int								g_maxFrames;
 
 	int 							displayWidth, displayHeight;
-	double							dislpayFPS;	
+	double							displayFPS;	
 	BMDTimeValue 					frameRateDuration, frameRateScale;
 };
 

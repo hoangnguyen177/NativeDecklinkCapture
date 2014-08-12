@@ -58,7 +58,7 @@ void GLWidget::paintGL()
 
 }
 
-void GLWidget::resizeGL(int width, int height)
+void GLWidget::resizeGL(int w, int h)
 {
     int width = w;
     int height = (h>0)?h:1;
@@ -84,7 +84,7 @@ void GLWidget::resizeGL(int width, int height)
 
 void GLWidget::initDisplayList()
 {
-     std::cout<<"[start initDisplayList@GLWidget]" <<std::endl;
+     //std::cout<<"[start initDisplayList@GLWidget]" <<std::endl;
      /***creating texture **********/
      glEnable(GL_TEXTURE_2D);
      //get the texture
@@ -111,13 +111,13 @@ void GLWidget::initDisplayList()
      glVertex3i( 0, 0, 0);
 
      glTexCoord2d(1 , 1);
-     glVertex3i(this->getWidth(), 0, 0);
+     glVertex3i(this->getTextureWidth(), 0, 0);
 
      glTexCoord2d(1, 0);
-     glVertex3i(this->getWidth(), this->getHeight(), 0);
+     glVertex3i(this->getTextureWidth(), this->getTextureHeight(), 0);
 
      glTexCoord2d(0, 0);
-     glVertex3i(0, this->getHeight(), 0);
+     glVertex3i(0, this->getTextureHeight(), 0);
 
      glEnd();
      glEndList();
