@@ -28,11 +28,15 @@ public:
  GLuint getTexture();
  void setTexture(GLuint _texture);
 
+public slots:
+ void updateGLSlot();
 protected:
  void initializeGL();
  void paintGL();
  void resizeGL(int width, int height);
  void initDisplayList();
+
+
 private:
  GLuint displayList;
  GLuint texture;

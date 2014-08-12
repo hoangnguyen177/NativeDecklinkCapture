@@ -265,6 +265,7 @@ int Window::processArguments(int argc, char* argv[]){
 
 
      delegate = new DeckLinkCaptureDelegate(glWidget);
+     connect(delegate, SIGNAL(updateGLSignal()), glWidget, SLOT(updateGLSlot()));
      deckLinkInput->SetCallback(delegate);
    
      // Obtain an IDeckLinkDisplayModeIterator to enumerate the display modes supported on output

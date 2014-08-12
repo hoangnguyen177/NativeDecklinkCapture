@@ -3,10 +3,11 @@
 
 #include "DeckLinkAPI.h"
 #include "glwidget.h"
+#include <QObject>
 
-
-class DeckLinkCaptureDelegate : public IDeckLinkInputCallback
+class DeckLinkCaptureDelegate : public QObject, public IDeckLinkInputCallback
 {
+	Q_OBJECT
 public:
 	DeckLinkCaptureDelegate(GLWidget* _glWidget);
 	~DeckLinkCaptureDelegate();
@@ -28,7 +29,8 @@ public:
 
 	
 	static double sageTime(); //replace sage::getTime
-
+signals:
+	void updateGLSignal();
 private:
 	ULONG						m_refCount;
 	pthread_mutex_t				m_mutex;

@@ -25,6 +25,10 @@ GLWidget::GLWidget(QWidget *parent)
      return QSize(1600, 1200);
  }
 
+void GLWidget::updateGLSlot(){
+ this->updateGL();
+}
+
  void GLWidget::setBuffer(GLubyte* _buffer){
     fprintf(stderr, "setting buffer \n");	  
     buffer = _buffer; 
@@ -42,7 +46,7 @@ GLWidget::GLWidget(QWidget *parent)
 
 void GLWidget::paintGL()
 {
-    fprintf(stderr, "paintGL \n");
+    fprintf(stderr, "paintGL texturewidth:%d textureheight: %d\n", this->getTextureWidth(), this->getTextureHeight());
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glShadeModel(GL_FLAT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

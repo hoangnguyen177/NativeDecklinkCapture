@@ -73,7 +73,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 	if(videoFrame)
 	{	
 
-//#if 0
+#if 0
 		if (warmup > 0) {
 		    warmup--;
 		    fprintf(stderr, "Warmup: frame %03d\r", warmup);
@@ -83,7 +83,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 		    fprintf(stderr, "\nWarmup done\n");
 		    warmup--;
 		}
-//#endif
+#endif
 
 		if (frameCount==0) {
 			BMDTimeValue hframedur;
@@ -136,7 +136,8 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 							//swapWithBuffer(sageInf, (unsigned char *)frameBytes);
 							//TODO HERE: get glWidge to display frameBytes
 							glWidget->setBuffer((GLubyte*)frameBytes);
-							glWidget->updateGL();								
+							//glWidget->updateGL();		
+							emit this->updateGLSignal();						
 						}
 
 				} else {
