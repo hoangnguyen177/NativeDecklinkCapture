@@ -15,9 +15,8 @@ public:
 
  QSize minimumSizeHint() const;
  QSize sizeHint() const;
-
- void setBuffer(GLubyte* _buffer)			{ buffer = _buffer;			}
- GLubyte* getBuffer()						{ return buffer;			}
+ void setBuffer(GLubyte* _buffer);
+ GLubyte* getBuffer()						{ return buffer;}
 
  void setTextureWidth(int _tWidth)			{ textureWidth = _tWidth;	}
  void setTextureHeight(int _tHeight)		{ textureHeight = _tHeight;	}

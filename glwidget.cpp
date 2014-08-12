@@ -1,20 +1,17 @@
 #include <QtGui>
 #include <QtOpenGL>
-
+#include <stdio.h>
 #include "glwidget.h"
 
 GLWidget::GLWidget(QWidget *parent)
      : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
  {
      this->initDisplayList();
+     this->buffer=NULL;
  }
 
  GLWidget::~GLWidget()
  {
-     if(this->buffer != NULL){
-          delete this->buffer;
-          this->buffer = NULL;          
-     }
 
  }
 
@@ -28,6 +25,10 @@ GLWidget::GLWidget(QWidget *parent)
      return QSize(1600, 1200);
  }
 
+ void GLWidget::setBuffer(GLubyte* _buffer){
+    fprintf(stderr, "setting buffer \n");	  
+    buffer = _buffer; 
+ }
 
  void GLWidget::initializeGL()
  {
@@ -41,6 +42,7 @@ GLWidget::GLWidget(QWidget *parent)
 
 void GLWidget::paintGL()
 {
+    fprintf(stderr, "paintGL \n");
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glShadeModel(GL_FLAT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -49,9 +51,8 @@ void GLWidget::paintGL()
     //do painting
     glPushMatrix();
     glCallList(this->getDisplayList());
-    if(this->buffer)
-     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, this->getTextureWidth(), this->getTextureHeight(), 0,
-                     GL_RGB, GL_UNSIGNED_BYTE, this->buffer); 
+    if(this->buffer!=NULL)
+     glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, this->getTextureWidth(), this->getTextureHeight(), 0,GL_RGB, GL_UNSIGNED_BYTE, this->buffer); 
 
     glPopMatrix();
     glFlush();

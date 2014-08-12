@@ -42,7 +42,7 @@ private:
 	unsigned long 				frameCount;
 
 	//for drawing the video frame
-	GLWidget*					glWidget; 
+	GLWidget*					glWidget;
 };
 
 #endif

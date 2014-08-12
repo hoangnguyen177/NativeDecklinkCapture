@@ -16,6 +16,7 @@ struct timeval tv_start;
 
 DeckLinkCaptureDelegate::DeckLinkCaptureDelegate(GLWidget* _glWidget) : m_refCount(0)
 {
+	fprintf(stderr, "initing DeckLinkCaptureDelegate\n");
 	pthread_mutex_init(&m_mutex, NULL);
 	glWidget = _glWidget;
 	frameCount = 0;
@@ -58,6 +59,7 @@ ULONG DeckLinkCaptureDelegate::Release(void)
 
 HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoFrame, IDeckLinkAudioInputPacket* audioFrame)
 {
+	fprintf(stderr, "FrameArrived \n");
 	IDeckLinkVideoFrame*	                rightEyeFrame = NULL;
 	IDeckLinkVideoFrame3DExtensions*        threeDExtensions = NULL;
 	void*					frameBytes;
@@ -71,7 +73,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 	if(videoFrame)
 	{	
 
-#if 0
+//#if 0
 		if (warmup > 0) {
 		    warmup--;
 		    fprintf(stderr, "Warmup: frame %03d\r", warmup);
@@ -81,7 +83,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 		    fprintf(stderr, "\nWarmup done\n");
 		    warmup--;
 		}
-#endif
+//#endif
 
 		if (frameCount==0) {
 			BMDTimeValue hframedur;

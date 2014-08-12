@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
+
 using namespace std;
 
 #include "glwidget.h"
@@ -13,12 +15,15 @@ using namespace std;
 /*constructor*/
 Window::Window(int argc, char *argv[])
 {
+     fprintf(stderr, "initing glWidget\n");	
      glWidget = new GLWidget;
      //process the arguments
      deckLinkIterator = CreateDeckLinkIteratorInstance();
+     fprintf(stderr, "Processing arguments\n");	
      if(processArguments(argc, argv) < 0)
           return;     
      //add glWidget to the window
+     fprintf(stderr, "Setting up windows\n");	
      QHBoxLayout *mainLayout = new QHBoxLayout;
      mainLayout->addWidget(glWidget);
      setLayout(mainLayout);
@@ -413,7 +418,12 @@ int Window::processArguments(int argc, char* argv[]){
      glWidget->setTextureWidth(displayWidth);
      glWidget->setTextureHeight(displayHeight);
      fprintf(stderr, "GetFrameRate: %10ld %10ld --> fps %g\n", (long)frameRateScale, (long)frameRateDuration, displayFPS);
-
+     result = deckLinkInput->StartStreams();
+     if(result != S_OK){
+     	fprintf(stderr, "Cannot start streams...\n");
+	return -1;
+     }
+     fprintf(stderr, "Finish procesing arguments \n");
 }
 
 
