@@ -6,7 +6,6 @@
 GLWidget::GLWidget(QWidget *parent)
      : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
  {
-     this->initDisplayList();
      this->buffer=NULL;
  }
 
@@ -42,6 +41,7 @@ void GLWidget::updateGLSlot(){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
+    this->initDisplayList();
  }
 
 void GLWidget::paintGL()
@@ -70,7 +70,7 @@ void GLWidget::resizeGL(int w, int h)
     glViewport(0,0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, this->width() , 0 , this->height(), -1.0 , 1.0);
+    glOrtho(0, this->getTextureWidth() , 0 , this->getTextureHeight(), 0.0 , 1.0);
     glMatrixMode(GL_MODELVIEW);
 
      /*int side = qMin(width, height);
