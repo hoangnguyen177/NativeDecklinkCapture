@@ -1,12 +1,14 @@
 #include <QtGui>
 #include <QtOpenGL>
 #include <stdio.h>
+#include <png.h>
 #include "glwidget.h"
 
 GLWidget::GLWidget(QWidget *parent)
      : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
  {
      this->buffer=NULL;
+     testFileWritten = false;
  }
 
  GLWidget::~GLWidget()
@@ -29,8 +31,13 @@ void GLWidget::updateGLSlot(){
 }
 
  void GLWidget::setBuffer(GLubyte* _buffer){
-    fprintf(stderr, "setting buffer \n");	  
+    fprintf(stderr, "setting buffer \n");	 
     buffer = _buffer; 
+    if(!testFileWritten){
+        std::string _fileName("test.png");
+        this->WritePNG(_fileName.c_str(), this->getTextureWidth(), this->getTextureHeight(), GL_RGB, GL_UNSIGNED_BYTE, this->buffer);
+        testFileWritten = true;
+    }
  }
 
  void GLWidget::initializeGL()
@@ -156,3 +163,134 @@ void GLWidget::setTexture(GLuint t)
 {
      this->texture = t;
 }
+
+int GLWidget::WritePNG(const char *fileName, int width, int height,
+                    GLenum imageFormat, GLenum imageType,
+                    GLvoid * imagePtr)
+{
+   FILE *fp;
+   png_structp pngPtr;
+   png_infop infoPtr;
+   int colorType, bitDepth;
+   int k;
+   png_bytep rowPointers[4096];
+   png_bytep rowPtr;
+   int rowWidth;
+
+   /* open the file */
+   fp = fopen(fileName, "wb");
+   if (fp == NULL) {
+      printf("Viewperf: could not open image dump file: %s\n", fileName);
+      return 1;
+   }
+
+   /* Create and initialize the png_struct with the desired error handler
+    * functions.  If you want to use the default stderr and longjump method,
+    * you can supply NULL for the last three parameters.  We also check that
+    * the library version is compatible with the one used at compile time,
+    * in case we are using dynamically linked libraries.  REQUIRED.
+    */
+   pngPtr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
+      (png_voidp) NULL, (png_error_ptr)NULL, (png_error_ptr)NULL);
+
+   if (pngPtr == NULL)
+   {
+      fclose(fp);
+      printf("Viewperf: PNG image creation failed\n");
+      return 1;
+   }
+
+   /* Allocate/initialize the image information data.  REQUIRED */
+   infoPtr = png_create_info_struct(pngPtr);
+   if (infoPtr == NULL)
+   {
+      fclose(fp);
+      png_destroy_write_struct(&pngPtr,  (png_infopp)NULL);
+      printf("Viewperf: PNG image information data creation failed\n");
+      return 1;
+   }
+
+// MWC: 2014-06-10: This section of code problematic on newer versions of Linux
+// if (setjmp(pngPtr->jmpbuf)) {
+//    /* If we get here, we had a problem reading the file */
+//    fclose(fp);
+//    png_destroy_write_struct(&pngPtr, (png_infopp)NULL);
+//    printf("Viewperf: PNG write error occurred\n");
+//    return 1;
+// }
+
+   /* set up the output control if you are using standard C streams */
+   png_init_io(pngPtr, fp);
+
+   /* Set the image information here.  Width and height are up to 2^31,
+    * bit_depth is one of 1, 2, 4, 8, or 16, but valid values also depend on
+    * the color_type selected. color_type is one of PNG_COLOR_TYPE_GRAY,
+    * PNG_COLOR_TYPE_GRAY_ALPHA, PNG_COLOR_TYPE_PALETTE, PNG_COLOR_TYPE_RGB,
+    * or PNG_COLOR_TYPE_RGB_ALPHA.  interlace is either PNG_INTERLACE_NONE or
+    * PNG_INTERLACE_ADAM7, and the compression_type and filter_type MUST
+    * currently be PNG_COMPRESSION_TYPE_BASE and PNG_FILTER_TYPE_BASE. REQUIRED
+    */
+   switch (imageFormat) {
+     case GL_COLOR_INDEX:
+     case GL_LUMINANCE:
+    colorType = PNG_COLOR_TYPE_GRAY;
+    rowWidth = 1;
+    break;
+     case GL_LUMINANCE_ALPHA:
+    colorType = PNG_COLOR_TYPE_GRAY_ALPHA;
+    rowWidth = 2;
+    break;
+     case GL_RGB:
+    colorType = PNG_COLOR_TYPE_RGB;
+    rowWidth = 3;
+    break;
+     case GL_RGBA:
+    colorType = PNG_COLOR_TYPE_RGB_ALPHA;
+    rowWidth = 4;
+    break;
+     default:
+        printf("Viewperf: internal error, unknown imageFormat found on dumping\n");
+    fflush(stdout);
+    exit(1);
+   }
+   if (imageType == GL_UNSIGNED_SHORT) {
+     bitDepth = 16;
+     rowWidth *= 2;
+   } else {
+     bitDepth = 8;
+     rowWidth *= 1;
+   }
+
+   png_set_IHDR(pngPtr, infoPtr, width, height, bitDepth, colorType,
+      PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+   /* Optional gamma chunk is strongly suggested if you have any guess
+    * as to the correct gamma of the image.
+    */
+   //png_set_gAMA(pngPtr, infoPtr, GAMMA);
+
+   /* Write the file header information.  REQUIRED */
+   png_write_info(pngPtr, infoPtr);
+
+   /* set row pointers in reverse order */
+   rowWidth *= width;
+   for (k = 0; k < height; k++) {
+     rowPointers[k] = (png_bytep)imagePtr + (height-k-1)*rowWidth;
+   }
+
+   /* One of the following output methods is REQUIRED */
+   png_write_image(pngPtr, rowPointers);
+
+   /* It is REQUIRED to call this to finish writing the rest of the file */
+   png_write_end(pngPtr, infoPtr);
+
+   /* clean up after the write, and free any memory allocated */
+   png_destroy_write_struct(&pngPtr, (png_infopp)NULL);
+
+   /* close the file */
+   fclose(fp);
+
+   /* that's it */
+   return 0;
+}
+

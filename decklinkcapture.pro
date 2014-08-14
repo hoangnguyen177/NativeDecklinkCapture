@@ -20,7 +20,7 @@ HEADERS += decklinkcapturedelegate.h \
 
 
 # For Decklink SDK
-INCLUDEPATH += include
+INCLUDEPATH += include /usr/include/libpng
 
 macx {
     LIBS += 
@@ -33,7 +33,7 @@ linux-g++-64 {
     LIBS +=
 }
 
-LIBS += -lpthread -lm -ldl
+LIBS += -lpthread -lm -ldl -lpng
 
 
 target.path=.

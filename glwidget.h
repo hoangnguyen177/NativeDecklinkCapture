@@ -28,6 +28,9 @@ public:
  GLuint getTexture();
  void setTexture(GLuint _texture);
 
+
+  int WritePNG(const char *fileName, int width, int height, GLenum imageFormat, GLenum imageType, GLvoid * imagePtr);
+
 public slots:
  void updateGLSlot();
 protected:
@@ -43,6 +46,7 @@ private:
  GLubyte* buffer;
  int textureWidth;
  int textureHeight;
+ bool testFileWritten;
 
 
 };
