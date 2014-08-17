@@ -59,7 +59,6 @@ ULONG DeckLinkCaptureDelegate::Release(void)
 
 HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoFrame, IDeckLinkAudioInputPacket* audioFrame)
 {
-	fprintf(stderr, "FrameArrived \n");
 	IDeckLinkVideoFrame*	                rightEyeFrame = NULL;
 	IDeckLinkVideoFrame3DExtensions*        threeDExtensions = NULL;
 	void*					frameBytes;
@@ -97,69 +96,65 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 		}
 		else
 		{
-			//sage here
-				BMDTimeScale htimeScale = frameRateScale;
-				BMDTimeValue hframeTime;
-				BMDTimeValue hframeDuration;
-				HRESULT h = videoFrame->GetHardwareReferenceTimestamp(htimeScale, &hframeTime, &hframeDuration);
-				if (h == S_OK) {
-					double frametime = (double)(hframeTime-startoftime) / (double)hframeDuration;
-					double instantfps = 1000000.0/(DeckLinkCaptureDelegate::sageTime()-lastframetime);
-					if ( ((int)frametime) > frameCount) { skipf = 1; frameCount++; }
-					if ( instantfps <= (fps*DROP_THRESHOLD) ) { skipf = 1; frameCount++; }   // if lower than 95% of target FPS
-					//if (skipf)
-						//sage::printLog("HARD Time: %10ld %10ld %10ld: %f %d %f --", hframeTime, hframeDuration, htimeScale, frametime, frameCount, instantfps );
-					//else
-						//sage::printLog("HARD Time: %10ld %10ld %10ld: %f %d %f", hframeTime, hframeDuration, htimeScale, frametime, frameCount, instantfps );
-					lastframetime = DeckLinkCaptureDelegate::sageTime();
-				} else {
-					BMDTimeValue frameTime, frameDuration;
-					videoFrame->GetStreamTime(&frameTime, &frameDuration, frameRateScale);
+			BMDTimeScale htimeScale = frameRateScale;
+			BMDTimeValue hframeTime;
+			BMDTimeValue hframeDuration;
+			HRESULT h = videoFrame->GetHardwareReferenceTimestamp(htimeScale, &hframeTime, &hframeDuration);
+			if (h == S_OK) {
+				double frametime = (double)(hframeTime-startoftime) / (double)hframeDuration;
+				double instantfps = 1000000.0/(DeckLinkCaptureDelegate::sageTime()-lastframetime);
+				if ( ((int)frametime) > frameCount) { skipf = 1; frameCount++; }
+				if ( instantfps <= (fps*DROP_THRESHOLD) ) { skipf = 1; frameCount++; }   // if lower than 95% of target FPS
+				//if (skipf)
+					//sage::printLog("HARD Time: %10ld %10ld %10ld: %f %d %f --", hframeTime, hframeDuration, htimeScale, frametime, frameCount, instantfps );
+				//else
+					//sage::printLog("HARD Time: %10ld %10ld %10ld: %f %d %f", hframeTime, hframeDuration, htimeScale, frametime, frameCount, instantfps );
+				lastframetime = DeckLinkCaptureDelegate::sageTime();
+			} else {
+				BMDTimeValue frameTime, frameDuration;
+				videoFrame->GetStreamTime(&frameTime, &frameDuration, frameRateScale);
 
-					fprintf(stderr, "SOFT Time: %10ld %10ld %10ld", frameTime, frameDuration, frameRateScale);
-				}
+				fprintf(stderr, "SOFT Time: %10ld %10ld %10ld", frameTime, frameDuration, frameRateScale);
+			}
 
-				//double actualFPS = (double)frameRateScale / (double)frameRateDuration;
+			//double actualFPS = (double)frameRateScale / (double)frameRateDuration;
 
-				if (!skipf) {
-					// Get the pixels from the capture
-					videoFrame->GetBytes(&frameBytes);
+			if (!skipf) {
+				// Get the pixels from the capture
+				videoFrame->GetBytes(&frameBytes);
 
-					
-						int localskip = 0;
-						if (fps >= 50.0) {                // if 50p or 60p rate
-							if ( (frameCount%2) == 0 ) {  // skip every other frame
-								localskip = 1;
-							}
-						}
-						if (!localskip){
-							//swapWithBuffer(sageInf, (unsigned char *)frameBytes);
-							//TODO HERE: get glWidge to display frameBytes
-							glWidget->setBuffer((GLubyte*)frameBytes);
-							//glWidget->updateGL();		
-							emit this->updateGLSignal();						
-						}
-
-				} else {
-					fprintf(stderr, "#");
-				}
-
-			
-
-
-			////////// putting to file here
-
-				/*videoFrame->GetBytes(&frameBytes);
-				write(videoOutputFile, frameBytes, videoFrame->GetRowBytes() * videoFrame->GetHeight());
 				
-				if (rightEyeFrame)
-				{
-					rightEyeFrame->GetBytes(&frameBytes);
-					write(videoOutputFile, frameBytes, videoFrame->GetRowBytes() * videoFrame->GetHeight());
-				}*/
+					int localskip = 0;
+					if (fps >= 50.0) {                // if 50p or 60p rate
+						if ( (frameCount%2) == 0 ) {  // skip every other frame
+							localskip = 1;
+						}
+					}
+					if (!localskip){
+						//swapWithBuffer(sageInf, (unsigned char *)frameBytes);
+						//TODO HERE: get glWidge to display frameBytes
+						glWidget->setBuffer((GLubyte*)frameBytes);
+						//glWidget->updateGL();		
+						emit this->updateGLSignal();						
+					}
 
-			//////////
+			} else {
+				fprintf(stderr, "#");
+			}
+
+		
+
+
+
+			/*videoFrame->GetBytes(&frameBytes);
+			write(videoOutputFile, frameBytes, videoFrame->GetRowBytes() * videoFrame->GetHeight());
 			
+			if (rightEyeFrame)
+			{
+				rightEyeFrame->GetBytes(&frameBytes);
+				write(videoOutputFile, frameBytes, videoFrame->GetRowBytes() * videoFrame->GetHeight());
+			}*/
+		      
 		}
 		frameCount++;
 

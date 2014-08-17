@@ -18,12 +18,12 @@ GLWidget::GLWidget(QWidget *parent)
 
  QSize GLWidget::minimumSizeHint() const
  {
-     return QSize(800, 600);
+     return QSize(960, 540);
  }
 
  QSize GLWidget::sizeHint() const
  {
-     return QSize(1600, 1200);
+     return QSize(1920, 1080);
  }
 
 void GLWidget::updateGLSlot(){
@@ -31,7 +31,7 @@ void GLWidget::updateGLSlot(){
 }
 
  void GLWidget::setBuffer(GLubyte* _buffer){
-    fprintf(stderr, "setting buffer \n");	 
+    //fprintf(stderr, "setting buffer \n");	 
     buffer = _buffer; 
     if(!testFileWritten){
         std::string _fileName("test.png");
@@ -53,7 +53,7 @@ void GLWidget::updateGLSlot(){
 
 void GLWidget::paintGL()
 {
-    fprintf(stderr, "paintGL texturewidth:%d textureheight: %d\n", this->getTextureWidth(), this->getTextureHeight());
+    //fprintf(stderr, "paintGL texturewidth:%d textureheight: %d\n", this->getTextureWidth(), this->getTextureHeight());
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glShadeModel(GL_FLAT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -61,10 +61,12 @@ void GLWidget::paintGL()
 
     //do painting
     glPushMatrix();
+    glEnable(GL_TEXTURE_2D);
     glCallList(this->getDisplayList());
     if(this->buffer!=NULL)
      glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, this->getTextureWidth(), this->getTextureHeight(), 0,GL_RGB, GL_UNSIGNED_BYTE, this->buffer); 
 
+    glDisable(GL_TEXTURE_2D);	
     glPopMatrix();
     glFlush();
 
@@ -97,6 +99,7 @@ void GLWidget::resizeGL(int w, int h)
 void GLWidget::initDisplayList()
 {
      //std::cout<<"[start initDisplayList@GLWidget]" <<std::endl;
+     fprintf(stderr, "[GLWidget::initDisplayList] texture width: %d height:%d\n", this->getTextureWidth(), this->getTextureHeight());
      /***creating texture **********/
      glEnable(GL_TEXTURE_2D);
      //get the texture
