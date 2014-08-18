@@ -4,11 +4,78 @@
 #include <png.h>
 #include "glwidget.h"
 
+#include <QtOpenGL/QGLShaderProgram>
+#include <QtOpenGL/QGLShader>
+
+#include "sageShader.h"
+
+////////////////////////////////////////////////////////////////////////////////
+
+static const GLchar *generic_vertex = "          \
+\n#extension GL_ARB_texture_rectangle : enable\n \
+void main() {                                    \
+  gl_TexCoord[0] = gl_MultiTexCoord0;          \
+  gl_Position = ftransform();                  \
+}";
+
+////////////////////////////////////////////////////////////////////////////////
+
+static const GLchar *yuv_fragment = "                 \
+\n#extension GL_ARB_texture_rectangle : enable\n      \
+uniform sampler2DRect yuvtex;                         \
+void main(void) {                                     \
+    float nx, ny;                                     \
+    float y,u,v;                                      \
+    float r,g,b;                                      \
+    int m, n;                                         \
+    vec4 vy, uy;                                      \
+    nx=gl_TexCoord[0].x;                              \
+    ny=gl_TexCoord[0].y;                              \
+    if(mod(floor(nx),2.0)>0.5) {                      \
+    uy = texture2DRect(yuvtex,vec2(nx-1.0,ny));   \
+    vy = texture2DRect(yuvtex,vec2(nx,ny));       \
+    u  = uy.x;                                    \
+    v  = vy.x;                                    \
+    y  = vy.a;                                    \
+    }                                                 \
+    else {                                            \
+    uy = texture2DRect(yuvtex,vec2(nx,ny));       \
+    vy = texture2DRect(yuvtex,vec2(nx+1.0,ny));   \
+    u  = uy.x;                                    \
+    v  = vy.x;                                    \
+    y  = uy.a;                                    \
+    }                                                 \
+  y = 1.1640625 * ( y - 0.0625);                    \
+  u = u - 0.5;                                      \
+  v = v - 0.5;                                      \
+  r = y + 1.59765625 * v ;                          \
+  g = y - 0.390625   * u - 0.8125 * v ;             \
+  b = y + 2.015625   * u ;                          \
+  gl_FragColor=vec4(r,g,b,1.0);                     \
+}";
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
 GLWidget::GLWidget(QWidget *parent)
-     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
+     : QGLWidget(QGLFormat(QGL::DoubleBuffer), parent) //SampleBuffers
  {
-     this->buffer=NULL;
-     testFileWritten = false;
+    this->buffer=NULL;
+    testFileWritten = false;
+    this->bpp = 2;
+    if (programHandleYUV==0) {
+      // Load the shader
+      programHandleYUV = GLSLinstallShaders(generic_vertex, yuv_fragment);
+
+      // Finally, use the program
+      glUseProgramObjectARB(programHandleYUV);
+
+      // Switch back to no shader
+      glUseProgramObjectARB(0);
+    }
  }
 
  GLWidget::~GLWidget()
@@ -32,7 +99,7 @@ void GLWidget::updateGLSlot(){
 
  void GLWidget::setBuffer(GLubyte* _buffer){
     //fprintf(stderr, "setting buffer \n");	 
-    buffer = _buffer; 
+    memcpy(buffer, _buffer, this->getTextureWidth() * this->getTextureHeight() * bpp);
     if(!testFileWritten){
         std::string _fileName("test.png");
         this->WritePNG(_fileName.c_str(), this->getTextureWidth(), this->getTextureHeight(), GL_RGB, GL_UNSIGNED_BYTE, this->buffer);
@@ -44,18 +111,22 @@ void GLWidget::updateGLSlot(){
  {
     qglClearColor(QColor(Qt::black));
     //draw here
-    glShadeModel(GL_FLAT);
+    /*glShadeModel(GL_FLAT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
-    this->initDisplayList();
+    this->initDisplayList();*/
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
  }
 
 void GLWidget::paintGL()
 {
     //fprintf(stderr, "paintGL texturewidth:%d textureheight: %d\n", this->getTextureWidth(), this->getTextureHeight());
     glClearColor(0.0, 0.0, 0.0, 0.0);
-    glShadeModel(GL_FLAT);
+    /*glShadeModel(GL_FLAT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
@@ -68,7 +139,38 @@ void GLWidget::paintGL()
 
     glDisable(GL_TEXTURE_2D);	
     glPopMatrix();
-    glFlush();
+    glFlush();*/
+
+
+  glDisable(GL_TEXTURE_2D);
+  glEnable(GL_TEXTURE_RECTANGLE_ARB);
+  glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture);
+  glUseProgramObjectARB(GLWidget::programHandleYUV);
+  glActiveTexture(GL_TEXTURE0);
+  int h=glGetUniformLocationARB(GLWidget::programHandleYUV,"yuvtex");
+  glUniform1iARB(h,0);  /* Bind yuvtex to texture unit 0 */
+  glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture);
+  //draw quad
+  //drawQuad(depth, alpha, tempAlpha, left, right, bottom, top);
+  
+  glBegin(GL_QUADS);
+     glColor3f(1, 1, 1);
+     glTexCoord2d(0, 1);
+     glVertex3i( 0, 0, 0);
+
+     glTexCoord2d(1 , 1);
+     glVertex3i(this->getTextureWidth(), 0, 0);
+
+     glTexCoord2d(1, 0);
+     glVertex3i(this->getTextureWidth(), this->getTextureHeight(), 0);
+
+     glTexCoord2d(0, 0);
+     glVertex3i(0, this->getTextureHeight(), 0);
+  glEnd();
+  //end draw quad
+  glUseProgramObjectARB(0);
+  glDisable(GL_TEXTURE_RECTANGLE_ARB);
+  glEnable(GL_TEXTURE_2D);
 
 }
 
@@ -166,6 +268,77 @@ void GLWidget::setTexture(GLuint t)
 {
      this->texture = t;
 }
+
+
+void GLWidget::deleteTexture()
+{
+    if (texture >= 0) {
+      glDeleteTextures(1, &texture);
+      if (buffer)
+        free(buffer);
+    }
+}
+
+
+/**
+* renew texture
+*/
+void GLWidget::renewTexture(){
+  int newWidth, newHeight;
+  newWidth = this->getTextureWidth(); // getMax2n(texInfo.width);
+  newHeight = this->getTextureHeight(); // getMax2n(texInfo.height);
+
+  int maxt;
+  glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*)&maxt);
+  if (newWidth > maxt)  {
+    fprintf(stderr, "Warning: trying to create texture %d, bigger than maximun %d\n", newWidth, maxt);
+    newWidth = maxt;
+  }
+  if (newHeight > maxt) {
+    fprintf(stderr, "Warning: trying to create texture %d, bigger than maximun %d\n", newHeight, maxt);
+    newHeight = maxt;
+  }
+
+  if (newWidth <= this->getTextureWidth() && newHeight <= this->getTextureHeight()) {
+    //std::cout << "reuse texture : " << texWidth << " , " << texHeight);
+    return;
+  }
+
+  this->setTextureWidth(newWidth);
+  this->setTextureHeight(newHeight);
+
+  deleteTexture();
+  GLuint handle;      
+  glGenTextures(1, &handle);
+  texture = handle;
+
+  // Create GL texture object
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+  buffer = (GLubyte *) malloc(this->getTextureWidth() * this->getTextureHeight() * bpp);
+  memset(buffer, 0, this->getTextureWidth() * this->getTextureHeight() * bpp);
+
+  glDisable(GL_TEXTURE_2D);
+  glEnable(GL_TEXTURE_RECTANGLE_ARB);
+  glBindTexture(GL_TEXTURE_RECTANGLE_ARB, handle);
+  glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, , this->getTextureWidth(), this->getTextureHeight(), 0, 
+                                  GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
+  glDisable(GL_TEXTURE_RECTANGLE_ARB);
+  glEnable(GL_TEXTURE_2D);
+
+}
+
+
+
+
+
+
+
+
 
 int GLWidget::WritePNG(const char *fileName, int width, int height,
                     GLenum imageFormat, GLenum imageType,

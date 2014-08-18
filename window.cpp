@@ -11,7 +11,6 @@ using namespace std;
 #include "window.h"
 
 
-
 /*constructor*/
 Window::Window(int argc, char *argv[])
 {

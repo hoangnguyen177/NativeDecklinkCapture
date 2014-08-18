@@ -10,6 +10,8 @@ class GLWidget : public QGLWidget
  Q_OBJECT
 
 public:
+    static GLhandleARB programHandleYUV;    
+public:
  GLWidget(QWidget *parent = 0);
  ~GLWidget();
 
@@ -39,6 +41,8 @@ protected:
  void resizeGL(int width, int height);
  void initDisplayList();
 
+ void renewTexture();
+ void deleteTexture();
 
 private:
  GLuint displayList;
@@ -47,6 +51,7 @@ private:
  int textureWidth;
  int textureHeight;
  bool testFileWritten;
+ double   bpp;
 
 
 };
