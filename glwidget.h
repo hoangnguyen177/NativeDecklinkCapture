@@ -4,16 +4,17 @@
 //#include <QtOpenGL>
 #include <QGLWidget>
 #include <QMutex>
-//#define GLSL_YUV
 
 class GLWidget : public QGLWidget
 {
  Q_OBJECT
 
+
 public:
-    static GLhandleARB programHandleYUV;    
-public:
- GLWidget(QWidget *parent = 0);
+#if defined(GLSL_YUV)        
+  static GLhandleARB programHandleYUV;    
+#endif
+  GLWidget(QWidget *parent = 0);
  ~GLWidget();
 
  QSize minimumSizeHint() const;

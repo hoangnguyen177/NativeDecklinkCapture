@@ -8,7 +8,7 @@ TEMPLATE = app
 CONFIG-=warn_on
 CONFIG+=release
 
-
+#DEFINES+=GLSL_YUV
 
 SOURCES += sageShader.cpp decklinkcapturedelegate.cpp include/DeckLinkAPIDispatch.cpp \
 	glwidget.cpp window.cpp 
