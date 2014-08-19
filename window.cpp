@@ -262,7 +262,7 @@ int Window::processArguments(int argc, char* argv[]){
      fprintf(stderr, "\n");
 
 
-
+     //glWidget->initShaderProgram();
      delegate = new DeckLinkCaptureDelegate(glWidget);
      connect(delegate, SIGNAL(updateGLSignal()), glWidget, SLOT(updateGLSlot()));
      deckLinkInput->SetCallback(delegate);
@@ -417,6 +417,7 @@ int Window::processArguments(int argc, char* argv[]){
      //set texture width and height
      glWidget->setTextureWidth(displayWidth);
      glWidget->setTextureHeight(displayHeight);
+     glWidget->initBuffer();
      fprintf(stderr, "GetFrameRate: %10ld %10ld --> fps %g\n", (long)frameRateScale, (long)frameRateDuration, displayFPS);
      result = deckLinkInput->StartStreams();
      if(result != S_OK){

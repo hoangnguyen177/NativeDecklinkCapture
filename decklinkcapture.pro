@@ -10,13 +10,11 @@ CONFIG+=release
 
 
 
-SOURCES += decklinkcapturedelegate.cpp include/DeckLinkAPIDispatch.cpp \
-			glwidget.cpp \
-			window.cpp
-HEADERS += decklinkcapturedelegate.h \
+SOURCES += sageShader.cpp decklinkcapturedelegate.cpp include/DeckLinkAPIDispatch.cpp \
+	glwidget.cpp window.cpp 
+HEADERS += sageShader.h decklinkcapturedelegate.h \
 	include/DeckLinkAPI.h \
-	glwidget.h \
-	window.h
+	glwidget.h window.h
 
 
 # For Decklink SDK
@@ -33,7 +31,7 @@ linux-g++-64 {
     LIBS +=
 }
 
-LIBS += -lpthread -lm -ldl -lpng
+LIBS += -lpthread -lm -ldl -lpng -lGLEW
 
 
 target.path=.

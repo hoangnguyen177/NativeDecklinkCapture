@@ -55,7 +55,7 @@
 //
 // Returns 1 if an OpenGL error occurred, 0 otherwise.
 //
-int GLprintError(const char *file, int line);
+//int GLprintError(const char *file, int line);
 
 //
 // Print out the information log for a shader object

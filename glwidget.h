@@ -1,9 +1,10 @@
 #ifndef UIWIDGET_H
 #define UIWIDGET_H
 /*QT*/
-#include <QtOpenGL>
+//#include <QtOpenGL>
 #include <QGLWidget>
-
+#include <QMutex>
+//#define GLSL_YUV
 
 class GLWidget : public QGLWidget
 {
@@ -17,21 +18,29 @@ public:
 
  QSize minimumSizeHint() const;
  QSize sizeHint() const;
- void setBuffer(GLubyte* _buffer);
- GLubyte* getBuffer()						{ return buffer;}
+ void setBuffer(unsigned char * _buffer);
+ unsigned char * getBuffer()			{ return buffer;}
 
- void setTextureWidth(int _tWidth)			{ textureWidth = _tWidth;	}
+ void setTextureWidth(int _tWidth)		{ textureWidth = _tWidth;	}
  void setTextureHeight(int _tHeight)		{ textureHeight = _tHeight;	}
- int getTextureWidth()						{ return textureWidth;		}
- int getTextureHeight()					{ return textureHeight;		}
+ int getTextureWidth()				{ return textureWidth;		}
+ int getTextureHeight()				{ return textureHeight;		}
 
  GLuint getDisplayList();
  void setDisplayList(GLuint _displayList);
  GLuint getTexture();
  void setTexture(GLuint _texture);
 
+ void initBuffer(); //init the buffer, called after setting texture width and height
 
-  int WritePNG(const char *fileName, int width, int height, GLenum imageFormat, GLenum imageType, GLvoid * imagePtr);
+#if defined(GLSL_YUV)       
+ void initShaderProgram();
+#endif
+
+ int WritePNG(const char *fileName, int width, int height, GLenum imageFormat, GLenum imageType, GLvoid * imagePtr);
+
+ bool readyToReceiveNewFrame()		{	return this->readyToReceiveNewFrame;	}
+
 
 public slots:
  void updateGLSlot();
@@ -43,16 +52,25 @@ protected:
 
  void renewTexture();
  void deleteTexture();
-
+#if !defined(GLSL_YUV)
+  void createTableLookup();
+  unsigned char red[256][256];
+  unsigned char blue[256][256];
+  unsigned char green[256][256][256];
+#endif
 private:
  GLuint displayList;
  GLuint texture;
- GLubyte* buffer;
+ unsigned char *buffer;
+ GLubyte* texture_buffer;
  int textureWidth;
  int textureHeight;
  bool testFileWritten;
- double   bpp;
 
+ bool readyToReceiveNewFrame;
+
+ double   bpp;
+ QMutex mutex;
 
 };
 

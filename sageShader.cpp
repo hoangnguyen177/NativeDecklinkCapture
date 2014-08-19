@@ -43,9 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sageShader.h>
 
-#if defined(GLSL_YUV) || defined(SAGE_S3D)
 #if !defined(WIN32)
 #define GLEW_STATIC 1
 #endif
@@ -54,7 +52,6 @@
 #include <OpenGL/glu.h>
 #else
 #include <GL/glu.h>
-#endif
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -67,7 +64,7 @@
 //
 // Returns 1 if an OpenGL error occurred, 0 otherwise.
 //
-int GLprintError(const char *file, int line)
+/*int GLprintError(const char *file, int line)
 {
    GLenum glErr;
    int    retCode = 0;
@@ -80,7 +77,7 @@ int GLprintError(const char *file, int line)
       glErr = glGetError();
    }
    return retCode;
-}
+}*/
 
 
 //
@@ -92,11 +89,9 @@ void GLSLprintShaderInfoLog(GLuint shader)
    int charsWritten  = 0;
    GLchar *infoLog;
 
-   GLprintError(__FILE__, __LINE__);  // Check for OpenGL errors
 
    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infologLength);
 
-   GLprintError(__FILE__, __LINE__);  // Check for OpenGL errors
 
    if (infologLength > 0)
    {
@@ -111,7 +106,6 @@ void GLSLprintShaderInfoLog(GLuint shader)
          fprintf(stderr, "GLSL> Shader InfoLog:%s\n", infoLog);
       free(infoLog);
    }
-   GLprintError(__FILE__, __LINE__);  // Check for OpenGL errors
 }
 
 //
@@ -123,11 +117,9 @@ void GLSLprintProgramInfoLog(GLuint program)
    int charsWritten  = 0;
    GLchar *infoLog;
 
-   GLprintError(__FILE__, __LINE__);  // Check for OpenGL errors
 
    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infologLength);
 
-   GLprintError(__FILE__, __LINE__);  // Check for OpenGL errors
 
    if (infologLength > 0)
    {
@@ -142,7 +134,6 @@ void GLSLprintProgramInfoLog(GLuint program)
          fprintf(stderr, "GLSL> Program InfoLog:%s\n", infoLog);
       free(infoLog);
    }
-   GLprintError(__FILE__, __LINE__);  // Check for OpenGL errors
 }
 
 
@@ -320,7 +311,6 @@ GLuint GLSLinstallShaders(const GLchar *Vertex, const GLchar *Fragment)
       // the compiler log file.
 
       glCompileShader(VS);
-      GLprintError(__FILE__, __LINE__);  // Check for OpenGL errors
       glGetShaderiv(VS, GL_COMPILE_STATUS, &vertCompiled);
       GLSLprintShaderInfoLog(VS);
 
@@ -336,7 +326,6 @@ GLuint GLSLinstallShaders(const GLchar *Vertex, const GLchar *Fragment)
       glShaderSource(FS, 1, &Fragment, NULL);
 
       glCompileShader(FS);
-      GLprintError(__FILE__, __LINE__);  // Check for OpenGL errors
       glGetShaderiv(FS, GL_COMPILE_STATUS, &fragCompiled);
       GLSLprintShaderInfoLog(FS);
 
@@ -348,7 +337,6 @@ GLuint GLSLinstallShaders(const GLchar *Vertex, const GLchar *Fragment)
    
    // Link the program object and print out the info log
    glLinkProgram(Prog);
-   GLprintError(__FILE__, __LINE__);  // Check for OpenGL errors
    glGetProgramiv(Prog, GL_LINK_STATUS, &linked);
    GLSLprintProgramInfoLog(Prog);
 

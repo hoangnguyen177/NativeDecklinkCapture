@@ -61,8 +61,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 {
 	IDeckLinkVideoFrame*	                rightEyeFrame = NULL;
 	IDeckLinkVideoFrame3DExtensions*        threeDExtensions = NULL;
-	void*					frameBytes;
-	//void*					audioFrameBytes;
+	unsigned char * 			frameBytes;
 	static int warmup = (int)fps; // 1 sec of frames
 	static BMDTimeValue startoftime;
 	static int skipf = 0;
@@ -121,7 +120,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 
 			if (!skipf) {
 				// Get the pixels from the capture
-				videoFrame->GetBytes(&frameBytes);
+				videoFrame->GetBytes((void**)&frameBytes);
 
 				
 					int localskip = 0;
@@ -133,9 +132,12 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 					if (!localskip){
 						//swapWithBuffer(sageInf, (unsigned char *)frameBytes);
 						//TODO HERE: get glWidge to display frameBytes
-						glWidget->setBuffer((GLubyte*)frameBytes);
-						//glWidget->updateGL();		
-						emit this->updateGLSignal();						
+						if(glWidget->readyToReceiveNewFrame()){
+							glWidget->setBuffer(frameBytes);
+							emit this->updateGLSignal();
+						}
+						else
+						fprintf(stderr, "glWidget is not ready to receive new frame. Skip.\n");						
 					}
 
 			} else {
