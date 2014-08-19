@@ -39,7 +39,7 @@ public:
 
  int WritePNG(const char *fileName, int width, int height, GLenum imageFormat, GLenum imageType, GLvoid * imagePtr);
 
- bool readyToReceiveNewFrame()		{	return this->readyToReceiveNewFrame;	}
+ bool isReadyToReceiveNewFrame()		{	return this->readyToReceiveNewFrame;	}
 
 
 public slots:
