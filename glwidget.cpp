@@ -123,6 +123,7 @@ GLWidget::GLWidget(QWidget *parent)
     testFileWritten = false;
     this->bpp = 2;
     this->readyToReceiveNewFrame = false;
+    this->bufferReady = false;
  }
 
 #if defined(GLSL_YUV)      
@@ -176,8 +177,12 @@ void GLWidget::updateGLSlot(){
     G = clip(( 298 * (Y-16) - 100 * (U-128) - 208 * (V-128) + 128) >> 8); \
     B = clip(( 298 * (Y-16) + 516 * (U-128)                 + 128) >> 8);
 
+while(this->bufferReady ==false);
+    
+this->mutex_lock.lock();
 this->readyToReceiveNewFrame = false;
-this->lock.lockForRead();    
+
+  
 #if defined(GLSL_YUV)    
   glDisable(GL_TEXTURE_2D);
   glEnable(GL_TEXTURE_RECTANGLE_ARB);
@@ -185,7 +190,7 @@ this->lock.lockForRead();
   glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, this->getTextureWidth(), this->getTextureHeight(),  
 				GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
   this->readyToReceiveNewFrame = true;
-  this->lock.unlock();    
+  this->mutex_lock.unlock();
   glDisable(GL_TEXTURE_RECTANGLE_ARB);
   glEnable(GL_TEXTURE_2D);
 #else
@@ -231,7 +236,7 @@ this->lock.lockForRead();
       texture_buffer[j+5] = blue[y][u];
     }
     this->readyToReceiveNewFrame = true;
-    this->lock.unlock();    
+    this->mutex_lock.unlock();
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->getTextureWidth(), this->getTextureHeight(),
 		    GL_RGB, GL_UNSIGNED_BYTE, texture_buffer);  
@@ -246,14 +251,15 @@ this->lock.lockForRead();
       fprintf(stderr, "NULL return \n");
       return;	
     }
-    this->lock.lockForWrite();
+    this->mutex_lock.lock();
+    this->bufferReady = false;
     memcpy(this->buffer, _buffer, this->getTextureWidth() * this->getTextureHeight() * bpp);
-    this->lock.unlock();
+    this->bufferReady = true;
+    this->mutex_lock.unlock();
  }
 
  void GLWidget::initializeGL()
  {
-    fprintf(stderr, "initialiseGL\n");
     qglClearColor(QColor(Qt::black));
     //draw here
     /*glShadeModel(GL_FLAT);
@@ -269,7 +275,6 @@ this->lock.lockForRead();
     this->initShaderProgram();
 #endif
     this->renewTexture();
-    fprintf(stderr, "done initialiseGL\n");
  }
 
 void GLWidget::paintGL()

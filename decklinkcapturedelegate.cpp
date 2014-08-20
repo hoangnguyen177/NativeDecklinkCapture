@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
 #include "decklinkcapturedelegate.h"
-#include <QtOpenGL>
+
 
 struct timeval tv_start;
 
@@ -33,18 +32,18 @@ DeckLinkCaptureDelegate::~DeckLinkCaptureDelegate()
 
 ULONG DeckLinkCaptureDelegate::AddRef(void)
 {
-	pthread_mutex_(&m_mutex);
+	pthread_mutex_lock(&m_mutex);
 		m_refCount++;
-	pthread_mutex_un(&m_mutex);
+	pthread_mutex_unlock(&m_mutex);
 
 	return (ULONG)m_refCount;
 }
 
 ULONG DeckLinkCaptureDelegate::Release(void)
 {
-	pthread_mutex_(&m_mutex);
+	pthread_mutex_lock(&m_mutex);
 		m_refCount--;
-	pthread_mutex_un(&m_mutex);
+	pthread_mutex_unlock(&m_mutex);
 
 	if (m_refCount == 0)
 	{

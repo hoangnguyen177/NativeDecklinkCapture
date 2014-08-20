@@ -3,7 +3,7 @@
 /*QT*/
 //#include <QtOpenGL>
 #include <QGLWidget>
-#include <QReadWriteLock>
+#include <QMutex>
 
 class GLWidget : public QGLWidget
 {
@@ -69,8 +69,10 @@ private:
  bool testFileWritten;
 
  bool readyToReceiveNewFrame;
+ bool bufferReady;
+ 
  double   bpp;
- QReadWriteLock lock;
+ QMutex mutex_lock;
 
 };
 

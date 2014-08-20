@@ -2,9 +2,9 @@
 #define __CAPTURE_H__
 
 #include "DeckLinkAPI.h"
-#include "glwidget.h"
 #include <QObject>
-
+#include <pthread.h>
+#include "glwidget.h"
 class DeckLinkCaptureDelegate : public QObject, public IDeckLinkInputCallback
 {
 	Q_OBJECT

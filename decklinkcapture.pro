@@ -14,7 +14,7 @@ SOURCES += sageShader.cpp decklinkcapturedelegate.cpp include/DeckLinkAPIDispatc
 	glwidget.cpp window.cpp 
 HEADERS += sageShader.h decklinkcapturedelegate.h \
 	include/DeckLinkAPI.h \
-	glwidget.h window.h readwritemutex.h
+	glwidget.h window.h
 
 
 # For Decklink SDK
