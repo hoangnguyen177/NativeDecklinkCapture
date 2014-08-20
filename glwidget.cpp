@@ -122,7 +122,7 @@ GLWidget::GLWidget(QWidget *parent)
     this->texture_buffer = NULL;
     testFileWritten = false;
     this->bpp = 2;
-    this->readyToReceiveNewFrame = true;
+    this->readyToReceiveNewFrame = false;
  }
 
 #if defined(GLSL_YUV)      
@@ -164,6 +164,7 @@ GLWidget::GLWidget(QWidget *parent)
  }
 
 void GLWidget::updateGLSlot(){
+  fprintf(stderr, "updateGLSlot\n");
   if(this->buffer ==NULL)
     return;
   if(this->texture_buffer == NULL)
@@ -174,9 +175,9 @@ void GLWidget::updateGLSlot(){
     R = clip(( 298 * (Y-16)                 + 409 * (V-128) + 128) >> 8); \
     G = clip(( 298 * (Y-16) - 100 * (U-128) - 208 * (V-128) + 128) >> 8); \
     B = clip(( 298 * (Y-16) + 516 * (U-128)                 + 128) >> 8);
-  
-this->mutex.lock();    
+
 this->readyToReceiveNewFrame = false;
+this->lock.lockForRead();    
 #if defined(GLSL_YUV)    
   glDisable(GL_TEXTURE_2D);
   glEnable(GL_TEXTURE_RECTANGLE_ARB);
@@ -184,7 +185,7 @@ this->readyToReceiveNewFrame = false;
   glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, this->getTextureWidth(), this->getTextureHeight(),  
 				GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
   this->readyToReceiveNewFrame = true;
-  this->mutex.unlock();    
+  this->lock.unlock();    
   glDisable(GL_TEXTURE_RECTANGLE_ARB);
   glEnable(GL_TEXTURE_2D);
 #else
@@ -210,11 +211,13 @@ this->readyToReceiveNewFrame = false;
 	texture_buffer[k + 5] = b2;
 	k += 6;
     }*/
+//       
     unsigned int boundry = this->getTextureWidth()* this->getTextureHeight() * bpp;
     unsigned char y, u, v;
     unsigned char * yuv = this->buffer;
     unsigned int j=0;
     //#pragma omp for
+    fprintf(stderr, "start converting\n");
     for(unsigned int i=0; i<boundry; i+=4, j+=6){
       y = yuv[i+1];
       u = yuv[i];
@@ -228,33 +231,24 @@ this->readyToReceiveNewFrame = false;
       texture_buffer[j+5] = blue[y][u];
     }
     this->readyToReceiveNewFrame = true;
-    this->mutex.unlock();    
+    this->lock.unlock();    
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->getTextureWidth(), this->getTextureHeight(),
 		    GL_RGB, GL_UNSIGNED_BYTE, texture_buffer);  
+          fprintf(stderr, "done converting\n");
 #endif    
     //this->updateGL();
 	this->update();
 }
 
  void GLWidget::setBuffer(unsigned char * _buffer){
-    fprintf(stderr, "setting buffer \n");
     if(_buffer == NULL){
       fprintf(stderr, "NULL return \n");
       return;	
     }
+    this->lock.lockForWrite();
     memcpy(this->buffer, _buffer, this->getTextureWidth() * this->getTextureHeight() * bpp);
-    if(!testFileWritten){
-        //this->WritePNG(_fileName.c_str(), this->getTextureWidth(), this->getTextureHeight(), GL_RGB, GL_UNSIGNED_BYTE, this->buffer);
-        /////////////
-	/*FILE* pFile;
-	pFile = fopen(_fileName.c_str(),"wb");
-	if (pFile ){
-	  fwrite(buffer,sizeof(GLubyte), this->getTextureWidth()*this->getTextureHeight()*bpp,pFile); 
-	  fclose(pFile);*/
-	/////////////
-	testFileWritten = true;
-    }
+    this->lock.unlock();
  }
 
  void GLWidget::initializeGL()
@@ -275,6 +269,7 @@ this->readyToReceiveNewFrame = false;
     this->initShaderProgram();
 #endif
     this->renewTexture();
+    fprintf(stderr, "done initialiseGL\n");
  }
 
 void GLWidget::paintGL()
@@ -417,7 +412,9 @@ void GLWidget::deleteTexture()
 }
 
 void GLWidget::initBuffer(){
+  fprintf(stderr, "buffer initialized\n");
   this->buffer = (unsigned char *) malloc(this->getTextureWidth() * this->getTextureHeight() * bpp);
+  this->readyToReceiveNewFrame = true;
 }
 
 /**

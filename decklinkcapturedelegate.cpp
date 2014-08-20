@@ -33,18 +33,18 @@ DeckLinkCaptureDelegate::~DeckLinkCaptureDelegate()
 
 ULONG DeckLinkCaptureDelegate::AddRef(void)
 {
-	pthread_mutex_lock(&m_mutex);
+	pthread_mutex_(&m_mutex);
 		m_refCount++;
-	pthread_mutex_unlock(&m_mutex);
+	pthread_mutex_un(&m_mutex);
 
 	return (ULONG)m_refCount;
 }
 
 ULONG DeckLinkCaptureDelegate::Release(void)
 {
-	pthread_mutex_lock(&m_mutex);
+	pthread_mutex_(&m_mutex);
 		m_refCount--;
-	pthread_mutex_unlock(&m_mutex);
+	pthread_mutex_un(&m_mutex);
 
 	if (m_refCount == 0)
 	{
@@ -133,6 +133,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 						//swapWithBuffer(sageInf, (unsigned char *)frameBytes);
 						//TODO HERE: get glWidge to display frameBytes
 						if(glWidget->isReadyToReceiveNewFrame()){
+							fprintf(stderr, "glWidget is ready. Set buffer \n");
 							glWidget->setBuffer(frameBytes);
 							emit this->updateGLSignal();
 						}
