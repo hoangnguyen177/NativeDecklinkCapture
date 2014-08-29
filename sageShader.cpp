@@ -291,6 +291,54 @@ GLSLreadShaderSource(char *fileName, GLchar **vertexShader, GLchar **fragmentSha
    return 1;
 }
 
+
+//
+// Allocate memory to hold the source of our shaders.
+//
+int
+GLSLreadShaderSource(char *fileName, GLchar **vertexShader, GLchar **fragmentShader)
+{
+   int vSize, fSize;
+
+   fprintf(stderr, "GLSL> load shader %s\n", fileName);
+   if (vertexShader) {
+      vSize = GLSLShaderSize(fileName, GLSLVertexShader);
+
+      if (vSize == -1) {
+         fprintf(stderr, "GLSL> Cannot determine size of the vertex shader %s\n", fileName);
+         return 0;
+      }
+      
+      *vertexShader = (GLchar *) malloc(vSize);
+   
+      //
+      // Read the source code
+      //
+      if (!GLSLreadShader(fileName, GLSLVertexShader, *vertexShader, vSize)) {
+         fprintf(stderr, "GLSL> Cannot read the file %s.vert\n", fileName);
+         return 0;
+      }
+   }
+   
+   if (fragmentShader) {
+      fSize = GLSLShaderSize(fileName, GLSLFragmentShader);
+
+      if (fSize == -1) {
+         fprintf(stderr, "GLSL> Cannot determine size of the fragment shader %s\n", fileName);
+         return 0;
+      }
+
+      *fragmentShader = (GLchar *) malloc(fSize);
+
+      if (!GLSLreadShader(fileName, GLSLFragmentShader, *fragmentShader, fSize)) {
+         fprintf(stderr, "GLSL> Cannot read the file %s.frag\n", fileName);
+         return 0;
+      }
+   }
+   
+   return 1;
+}
+
 GLuint GLSLinstallShaders(const GLchar *Vertex, const GLchar *Fragment)
 {
    GLuint VS, FS, Prog;   // handles to objects

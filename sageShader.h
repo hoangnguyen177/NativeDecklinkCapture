@@ -92,6 +92,9 @@ int GLSLreadShader(char *fileName, int shaderType, char *shaderText, int size);
 int GLSLreadShaderSource(char *fileName, GLchar **vertexShader, GLchar **fragmentShader);
 
 
+//install fragment shader only
+GLuint GLSLinstallFragmentShader(const GLchar *Vertex);
+//install both
 GLuint GLSLinstallShaders(const GLchar *Vertex, const GLchar *Fragment);
 
 

@@ -13,51 +13,42 @@
 #if defined(GLSL_YUV)       
   GLhandleARB GLWidget::programHandleYUV = 0;
 #endif
-////////////////////////////////////////////////////////////////////////////////
-
-static const GLchar *generic_vertex = "          \
-\n#extension GL_ARB_texture_rectangle : enable\n \
-void main() {                                    \
-  gl_TexCoord[0] = gl_MultiTexCoord0;          \
-  gl_Position = ftransform();                  \
-}";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static const GLchar *yuv_fragment = "                 \
-\n#extension GL_ARB_texture_rectangle : enable\n      \
-uniform sampler2DRect yuvtex;                         \
-void main(void) {                                     \
-    float nx, ny;                                     \
-    float y,u,v;                                      \
-    float r,g,b;                                      \
-    int m, n;                                         \
-    vec4 vy, uy;                                      \
-    nx=gl_TexCoord[0].x;                              \
-    ny=gl_TexCoord[0].y;                              \
-    if(mod(floor(nx),2.0)>0.5) {                      \
-    uy = texture2DRect(yuvtex,vec2(nx-1.0,ny));   \
-    vy = texture2DRect(yuvtex,vec2(nx,ny));       \
-    u  = uy.x;                                    \
-    v  = vy.x;                                    \
-    y  = vy.a;                                    \
-    }                                                 \
-    else {                                            \
-    uy = texture2DRect(yuvtex,vec2(nx,ny));       \
-    vy = texture2DRect(yuvtex,vec2(nx+1.0,ny));   \
-    u  = uy.x;                                    \
-    v  = vy.x;                                    \
-    y  = uy.a;                                    \
-    }                                                 \
-  y = 1.1640625 * ( y - 0.0625);                    \
-  u = u - 0.5;                                      \
-  v = v - 0.5;                                      \
-  r = y + 1.59765625 * v ;                          \
-  g = y - 0.390625   * u - 0.8125 * v ;             \
-  b = y + 2.015625   * u ;                          \
-  gl_FragColor=vec4(r,g,b,1.0);                     \
+static const GLchar *yuv_fragment = "                                           \
+uniform sampler2D yuvtex;                                                       \
+uniform float texel_width;                                                      \
+uniform float texture_width;                                                    \
+void main()                                                                     \
+{                                                                               \
+  float red, green, blue;                                                       \
+  vec4 luma_chroma;                                                             \
+  float luma, chroma_u,  chroma_v;                                              \
+  float pixelx, pixely;                                                         \
+  float xcoord, ycoord;                                                         \
+  pixelx = gl_TexCoord[0].x;                                                    \
+  pixely = gl_TexCoord[0].y;                                                    \
+  xcoord = floor (pixelx * texture_width);                                      \
+  luma_chroma = texture2D(yuvtex, vec2(pixelx, pixely));                        \
+  luma = (luma_chroma.r - 0.0625) * 1.1643;                                     \
+  if (0.0 == mod(xcoord , 2.0))                                          \
+  {                                                                             \
+    chroma_u = luma_chroma.a;                                                   \
+    chroma_v = texture2D(yuvtex, vec2(pixelx + texel_width, pixely)).a;         \
+  }                                                                             \
+  else                                                                   \
+  {                                                                             \
+    chroma_v = luma_chroma.a;                                                   \
+    chroma_u = texture2D(yuvtex, vec2(pixelx - texel_width, pixely)).a;         \
+  }                                                                             \
+  chroma_u = chroma_u - 0.5;                                                    \
+  chroma_v = chroma_v - 0.5;                                                    \
+  red = luma + 1.5958 * chroma_v;                                               \
+  green = luma - 0.39173 * chroma_u - 0.81290 * chroma_v;                       \
+  blue = luma + 2.017 * chroma_u;                                               \
+  gl_FragColor = vec4(red, green, blue, 1.0);                                   \
 }";
-
 
 
 
@@ -97,12 +88,12 @@ void GLWidget::createTableLookup(){
   for (int y = 0; y < 256; y++) {
     for (int u = 0; u < 256; u++) {
       for (int v = 0; v < 256; v++) {
-	yy = y << 8;
-	uu = u - 128;
-	vv = v - 128;
-	ug_plus_vg = uu * 88 + vv * 183;
-	val = (yy - ug_plus_vg) >> 8;
-	green[y][u][v] = Clamp(val);
+      	yy = y << 8;
+      	uu = u - 128;
+      	vv = v - 128;
+      	ug_plus_vg = uu * 88 + vv * 183;
+      	val = (yy - ug_plus_vg) >> 8;
+      	green[y][u][v] = Clamp(val);
       }
     }
   }
@@ -134,16 +125,27 @@ GLWidget::GLWidget(QWidget *parent)
        exit(1);
     }
     if (programHandleYUV==0) {
-    	fprintf(stderr, "initing gl shader\n");	 
-      // Load the shader
-      programHandleYUV = GLSLinstallShaders(generic_vertex, yuv_fragment);
-
-      // Finally, use the program
-      glUseProgramObjectARB(programHandleYUV);
-
-      // Switch back to no shader
-      glUseProgramObjectARB(0);
-    	fprintf(stderr, "done initing gl shader %d\n", programHandleYUV);	 
+    	//fprintf(stderr, "initing gl shader\n");	 
+      programHandleYUV = GLSLinstallFragmentShader(yuv_fragment);
+      glActiveTexture(GL_TEXTURE0);
+      int h=glGetUniformLocation(GLWidget::programHandleYUV,"yuvtex");
+      glUniform1i(h, 0);
+      int texture_width_location, texel_width_location;
+      //texture withd
+      texture_width_location =  glGetUniformLocation(GLWidget::programHandleYUV, "texture_width");
+      //fprintf(stderr, "texture width location:%d\n", texture_width_location);
+      if (-1 == texture_width_location)
+        fprintf(stderr, "Warning: can't get texture_width location\n");
+      else
+        glUniform1f(texture_width_location, (float)this->getTextureWidth());
+      //texel width
+      texel_width_location =  glGetUniformLocation(GLWidget::programHandleYUV, "texel_width");
+      //fprintf(stderr, "texel_width_location:%d\n", texel_width_location);
+      if (-1 == texel_width_location)
+        fprintf(stderr, "Warning: can't get texel_width location\n");
+      else
+        glUniform1f(texel_width_location, (1.0 / (float)this->getTextureWidth())); 
+    	//fprintf(stderr, "done initing gl shader %d\n", programHandleYUV);	 
     }
  }
 #endif
@@ -184,15 +186,9 @@ this->readyToReceiveNewFrame = false;
 
   
 #if defined(GLSL_YUV)    
-  glDisable(GL_TEXTURE_2D);
-  glEnable(GL_TEXTURE_RECTANGLE_ARB);
-  glBindTexture(GL_TEXTURE_RECTANGLE_ARB, this->texture);
-  glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, this->getTextureWidth(), this->getTextureHeight(),  
-				GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, buffer);
-  this->readyToReceiveNewFrame = true;
-  this->mutex_lock.unlock();
-  glDisable(GL_TEXTURE_RECTANGLE_ARB);
-  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, this->texture);
+  glTexImage2D(GL_TEXTURE_2D , 0, GL_LUMINANCE_ALPHA, this->getTextureWidth(), this->getTextureHeight(), 
+                               0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, this->buffer);
 #else
     /*
     unsigned char *yuv = buffer;
@@ -240,7 +236,7 @@ this->readyToReceiveNewFrame = false;
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->getTextureWidth(), this->getTextureHeight(),
 		    GL_RGB, GL_UNSIGNED_BYTE, texture_buffer);  
-          fprintf(stderr, "done converting\n");
+    fprintf(stderr, "done converting\n");
 #endif    
     //this->updateGL();
 	this->update();
@@ -262,40 +258,23 @@ this->readyToReceiveNewFrame = false;
  {
     qglClearColor(QColor(Qt::black));
     //draw here
-    /*glShadeModel(GL_FLAT);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_TEXTURE_2D);
-    this->initDisplayList();*/
+    /*this->initDisplayList();*/
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    this->renewTexture();
 #if defined(GLSL_YUV)      
     this->initShaderProgram();
 #endif
-    this->renewTexture();
  }
 
 void GLWidget::paintGL()
 {
   fprintf(stderr, "paintGL\n");
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glLoadIdentity();
-     
-#if defined(GLSL_YUV)  
-  glDisable(GL_TEXTURE_2D);
-  glEnable(GL_TEXTURE_RECTANGLE_ARB);
-  glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture);
-  glUseProgramObjectARB(GLWidget::programHandleYUV);
-  glActiveTexture(GL_TEXTURE0);
-  int h=glGetUniformLocationARB(GLWidget::programHandleYUV,"yuvtex");
-  glUniform1iARB(h,0);  /* Bind yuvtex to texture unit 0 */
-  glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture);
-#else
+  glLoadIdentity();    
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, texture);
-#endif
   //draw quad
   //drawQuad(depth, alpha, tempAlpha, left, right, bottom, top);
   glBegin(GL_QUADS);
@@ -313,16 +292,8 @@ void GLWidget::paintGL()
      glVertex3i(0, this->getTextureHeight(), 0);
      
   glEnd();
- 
-#if defined(GLSL_YUV)    
-  //end draw quad
-  glUseProgramObjectARB(0);
-  glDisable(GL_TEXTURE_RECTANGLE_ARB);
-  glEnable(GL_TEXTURE_2D);
-#endif
   this->swapBuffers();
   glFlush();
-  
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -459,18 +430,15 @@ void GLWidget::renewTexture(){
   this->texture_buffer = (GLubyte *) malloc(this->getTextureWidth() * this->getTextureHeight() * bpp);
   memset(this->texture_buffer, 0, this->getTextureWidth() * this->getTextureHeight() * bpp);
   
- #if defined(GLSL_YUV)  
-  glDisable(GL_TEXTURE_2D);
-  glEnable(GL_TEXTURE_RECTANGLE_ARB);
-  glBindTexture(GL_TEXTURE_RECTANGLE_ARB, handle);
-  glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP);
-  glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameterf(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 2, this->getTextureWidth(), this->getTextureHeight(), 0, 
-                                  GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, this->texture_buffer);
-  glDisable(GL_TEXTURE_RECTANGLE_ARB);
   glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, handle);
+
+ #if defined(GLSL_YUV)  
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_DECAL);
+  glTexImage2D(GL_TEXTURE_2D , 0, GL_LUMINANCE_ALPHA, this->getTextureWidth(), this->getTextureHeight(), 
+                               0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, this->buffer); 
 #else
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, handle);

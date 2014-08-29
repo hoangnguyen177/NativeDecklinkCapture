@@ -8,11 +8,18 @@ TEMPLATE = app
 CONFIG-=warn_on
 CONFIG+=release
 
-#DEFINES+=GLSL_YUV
+DEFINES+=GLSL_YUV
 
-SOURCES += sageShader.cpp decklinkcapturedelegate.cpp include/DeckLinkAPIDispatch.cpp \
+contains(DEFINES, GLSL_YUV) {
+	LIBS+= -lGLEW
+	SOURCES += sageShader.cpp
+	HEADERS += sageShader.h
+}
+
+
+SOURCES += decklinkcapturedelegate.cpp include/DeckLinkAPIDispatch.cpp \
 	glwidget.cpp window.cpp 
-HEADERS += sageShader.h decklinkcapturedelegate.h \
+HEADERS += decklinkcapturedelegate.h \
 	include/DeckLinkAPI.h \
 	glwidget.h window.h
 
@@ -31,7 +38,7 @@ linux-g++-64 {
     LIBS +=
 }
 
-LIBS += -lpthread -lm -ldl -lpng -lGLEW
+LIBS += -lpthread -lm -ldl -lpng
 
 
 target.path=.
