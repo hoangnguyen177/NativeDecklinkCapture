@@ -132,7 +132,7 @@ HRESULT DeckLinkCaptureDelegate::VideoInputFrameArrived(IDeckLinkVideoInputFrame
 						//swapWithBuffer(sageInf, (unsigned char *)frameBytes);
 						//TODO HERE: get glWidge to display frameBytes
 						if(glWidget->isReadyToReceiveNewFrame()){
-							fprintf(stderr, "glWidget is ready. Set buffer \n");
+							//fprintf(stderr, "glWidget is ready. Set buffer \n");
 							glWidget->setBuffer(frameBytes);
 							emit this->updateGLSignal();
 						}

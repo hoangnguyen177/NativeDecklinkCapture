@@ -167,7 +167,7 @@ GLWidget::GLWidget(QWidget *parent)
  }
 
 void GLWidget::updateGLSlot(){
-  fprintf(stderr, "updateGLSlot\n");
+  //fprintf(stderr, "updateGLSlot\n");
   if(this->buffer ==NULL)
     return;
   if(this->texture_buffer == NULL)
@@ -189,6 +189,8 @@ this->readyToReceiveNewFrame = false;
   glBindTexture(GL_TEXTURE_2D, this->texture);
   glTexImage2D(GL_TEXTURE_2D , 0, GL_LUMINANCE_ALPHA, this->getTextureWidth(), this->getTextureHeight(), 
                                0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, this->buffer);
+  this->readyToReceiveNewFrame = true;
+  this->mutex_lock.unlock();
 #else
     /*
     unsigned char *yuv = buffer;
@@ -218,7 +220,6 @@ this->readyToReceiveNewFrame = false;
     unsigned char * yuv = this->buffer;
     unsigned int j=0;
     //#pragma omp for
-    fprintf(stderr, "start converting\n");
     for(unsigned int i=0; i<boundry; i+=4, j+=6){
       y = yuv[i+1];
       u = yuv[i];
@@ -236,7 +237,6 @@ this->readyToReceiveNewFrame = false;
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->getTextureWidth(), this->getTextureHeight(),
 		    GL_RGB, GL_UNSIGNED_BYTE, texture_buffer);  
-    fprintf(stderr, "done converting\n");
 #endif    
     //this->updateGL();
 	this->update();
@@ -270,7 +270,6 @@ this->readyToReceiveNewFrame = false;
 
 void GLWidget::paintGL()
 {
-  fprintf(stderr, "paintGL\n");
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();    
   glEnable(GL_TEXTURE_2D);
