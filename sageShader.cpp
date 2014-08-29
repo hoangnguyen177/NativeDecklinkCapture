@@ -292,52 +292,33 @@ GLSLreadShaderSource(char *fileName, GLchar **vertexShader, GLchar **fragmentSha
 }
 
 
-//
-// Allocate memory to hold the source of our shaders.
-//
-int
-GLSLreadShaderSource(char *fileName, GLchar **vertexShader, GLchar **fragmentShader)
-{
-   int vSize, fSize;
-
-   fprintf(stderr, "GLSL> load shader %s\n", fileName);
-   if (vertexShader) {
-      vSize = GLSLShaderSize(fileName, GLSLVertexShader);
-
-      if (vSize == -1) {
-         fprintf(stderr, "GLSL> Cannot determine size of the vertex shader %s\n", fileName);
+//install fragment shader only
+GLuint GLSLinstallFragmentShader(const GLchar *Fragment){
+   GLuint FS, Prog;
+   GLint  fragCompiled, linked;
+    // Create a program object
+   Prog = glCreateProgram();
+   if (Fragment) {
+      FS = glCreateShader(GL_FRAGMENT_SHADER);
+      glShaderSource(FS, 1, &Fragment, NULL);
+      glCompileShader(FS);
+      glGetShaderiv(FS, GL_COMPILE_STATUS, &fragCompiled);
+      GLSLprintShaderInfoLog(FS);
+      if (!fragCompiled)
          return 0;
-      }
-      
-      *vertexShader = (GLchar *) malloc(vSize);
-   
-      //
-      // Read the source code
-      //
-      if (!GLSLreadShader(fileName, GLSLVertexShader, *vertexShader, vSize)) {
-         fprintf(stderr, "GLSL> Cannot read the file %s.vert\n", fileName);
+      glAttachShader(Prog, FS);
+      // Link the program object and print out the info log
+      glLinkProgram(Prog);
+      glGetProgramiv(Prog, GL_LINK_STATUS, &linked);
+      GLSLprintProgramInfoLog(Prog);
+      if (!linked)
          return 0;
-      }
+      glUseProgram(Prog);
+      return Prog;   
    }
-   
-   if (fragmentShader) {
-      fSize = GLSLShaderSize(fileName, GLSLFragmentShader);
-
-      if (fSize == -1) {
-         fprintf(stderr, "GLSL> Cannot determine size of the fragment shader %s\n", fileName);
-         return 0;
-      }
-
-      *fragmentShader = (GLchar *) malloc(fSize);
-
-      if (!GLSLreadShader(fileName, GLSLFragmentShader, *fragmentShader, fSize)) {
-         fprintf(stderr, "GLSL> Cannot read the file %s.frag\n", fileName);
-         return 0;
-      }
-   }
-   
-   return 1;
+   return 0;
 }
+
 
 GLuint GLSLinstallShaders(const GLchar *Vertex, const GLchar *Fragment)
 {
