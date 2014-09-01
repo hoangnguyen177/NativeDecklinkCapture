@@ -31,22 +31,22 @@ void main()                                                                     
   pixely = gl_TexCoord[0].y;                                                    \
   xcoord = floor (pixelx * texture_width);                                      \
   luma_chroma = texture2D(yuvtex, vec2(pixelx, pixely));                        \
-  luma = (luma_chroma.r - 0.0625) * 1.1643;                                     \
   if (0.0 == mod(xcoord , 2.0))                                          \
   {                                                                             \
-    chroma_u = luma_chroma.a;                                                   \
-    chroma_v = texture2D(yuvtex, vec2(pixelx + texel_width, pixely)).a;         \
+    chroma_u = luma_chroma.r;                                                   \
+    chroma_v = texture2D(yuvtex, vec2(pixelx + texel_width, pixely)).r;         \
   }                                                                             \
   else                                                                   \
   {                                                                             \
-    chroma_v = luma_chroma.a;                                                   \
-    chroma_u = texture2D(yuvtex, vec2(pixelx - texel_width, pixely)).a;         \
+    chroma_v = luma_chroma.r;                                                   \
+    chroma_u = texture2D(yuvtex, vec2(pixelx - texel_width, pixely)).r;         \
   }                                                                             \
+  luma = 1.1640625 * (luma_chroma.a - 0.0625);                                     \
   chroma_u = chroma_u - 0.5;                                                    \
   chroma_v = chroma_v - 0.5;                                                    \
-  red = luma + 1.5958 * chroma_v;                                               \
-  green = luma - 0.39173 * chroma_u - 0.81290 * chroma_v;                       \
-  blue = luma + 2.017 * chroma_u;                                               \
+  red = luma + 1.59765625 * chroma_v;                                               \
+  green = luma - 0.390625 * chroma_u - 0.8125 * chroma_v;                       \
+  blue = luma + 2.015625 * chroma_u;                                               \
   gl_FragColor = vec4(red, green, blue, 1.0);                                   \
 }";
 
