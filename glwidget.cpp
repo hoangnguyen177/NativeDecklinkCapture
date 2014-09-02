@@ -179,8 +179,9 @@ void GLWidget::updateGLSlot(){
     G = clip(( 298 * (Y-16) - 100 * (U-128) - 208 * (V-128) + 128) >> 8); \
     B = clip(( 298 * (Y-16) + 516 * (U-128)                 + 128) >> 8);
 
-while(this->bufferReady ==false);
-    
+//while(this->bufferReady ==false);
+if(this->bufferReady == false)
+  return;
 this->mutex_lock.lock();
 this->readyToReceiveNewFrame = false;
 
